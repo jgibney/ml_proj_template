@@ -10,8 +10,10 @@ from . import dispatcher
 # avoid touching source for new folders/data
 TRAINING_DATA = os.environ.get("TRAINING_DATA")
 TEST_DATA = os.environ.get("TEST_DATA")
+MODEL_DATA = os.environ.get("MODEL_DATA")
 FOLD = int(os.environ.get("FOLD"))
 MODEL = os.environ.get("MODEL")
+
 
 FOLD_MAPPING = {
     0: [1, 2, 3, 4],
@@ -24,31 +26,32 @@ FOLD_MAPPING = {
 if __name__ == "__main__":
     df = pd.read_csv(TRAINING_DATA)
     train_df = df[df.kfold.isin(FOLD_MAPPING.get(FOLD))]
-    valid_df = df[df.kfold==KFOLD]
+    valid_df = df[df.kfold==FOLD]
 
     ytrain = train_df.target.values
     yvalid = valid_df.target.values
 
-    train_df = train_df.drop["id", "target", "kfold"], axis=1)
-    valid_df = valid_df.drop["id", "target", "kfold"], axis=1)
+    train_df = train_df.drop(["id", "target", "kfold"], axis=1)
+    valid_df = valid_df.drop(["id", "target", "kfold"], axis=1)
 
     valid_df = valid_df[train_df.columns]
 
     label_encoders = []
     for c in train_df.columns:
-        lbl = preprocessing.labelEncoder()
-        lbl.fit(train_df[c].values.tolist() + valid_df(c).values.tolist()
+        lbl = preprocessing.LabelEncoder() # initialize class
+        lbl.fit(train_df[c].values.tolist() + valid_df[c].values.tolist())
         train_df.loc[:, c] = lbl.transform(train_df[c].values.tolist())
         valid_df.loc[:, c] = lbl.transform(valid_df[c].values.tolist())
-        label_encoders.append((c, lbl)
+        label_encoders.append((c, lbl))
 
     # data is ready to train
-    clf = dispatcher.MODELS[MODEL]
+    clf = dispatcher.MODELS[MODEL] # from the MODELS dictionary dispatcher
     clf.fit(train_df, ytrain)
     preds = clf.predict_proba(valid_df)[:, 1]
-    print(metrics.roc_auc_score(yvalid,preds))
+    print(metrics.roc_auc_score(yvalid,preds)) #sklearn
 
-    joblib.dump(label_encoders, f"models/{MODEL}_label_encoder.pkl")
-    joblib.dump(clf, f"models/{MODEL}.pkt")
+    # joblib used for ? saving into pkl file
+    joblib.dump(label_encoders, f"{MODEL_DATA}/{MODEL}_label_encoder.pkl")
+    joblib.dump(clf, f"{MODEL_DATA}/{MODEL}.pkl")
         
 # 34:09 Episode 1.1 Intro and building
